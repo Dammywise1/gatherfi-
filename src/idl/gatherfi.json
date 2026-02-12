@@ -1,0 +1,404 @@
+{
+  "version": "0.1.0",
+  "name": "gatherfi",
+  "instructions": [
+    {
+      "name": "initializePlatform",
+      "accounts": [
+        { "name": "admin", "isMut": true, "isSigner": true },
+        { "name": "platformConfig", "isMut": true, "isSigner": false },
+        { "name": "systemProgram", "isMut": false, "isSigner": false }
+      ],
+      "args": []
+    },
+    {
+      "name": "createEvent",
+      "accounts": [
+        { "name": "organizer", "isMut": true, "isSigner": true },
+        { "name": "event", "isMut": true, "isSigner": false },
+        { "name": "escrow", "isMut": true, "isSigner": false },
+        { "name": "systemProgram", "isMut": false, "isSigner": false }
+      ],
+      "args": [
+        { "name": "eventId", "type": "u64" },
+        { "name": "name", "type": "string" },
+        { "name": "description", "type": "string" },
+        { "name": "targetAmount", "type": "u64" },
+        { "name": "ticketPrice", "type": "u64" },
+        { "name": "maxTickets", "type": "u32" },
+        { "name": "location", "type": "string" },
+        { "name": "eventDate", "type": "i64" },
+        { "name": "acceptedTokens", "type": { "vec": { "defined": "TokenType" } } }
+      ]
+    },
+    {
+      "name": "contribute",
+      "accounts": [
+        { "name": "contributor", "isMut": true, "isSigner": true },
+        { "name": "event", "isMut": true, "isSigner": false },
+        { "name": "escrow", "isMut": true, "isSigner": false },
+        { "name": "contributorAccount", "isMut": true, "isSigner": false },
+        { "name": "tokenMint", "isMut": true, "isSigner": false },
+        { "name": "contributorTokenAccount", "isMut": true, "isSigner": false },
+        { "name": "escrowTokenAccount", "isMut": true, "isSigner": false },
+        { "name": "systemProgram", "isMut": false, "isSigner": false },
+        { "name": "tokenProgram", "isMut": false, "isSigner": false }
+      ],
+      "args": [
+        { "name": "amount", "type": "u64" },
+        { "name": "tokenType", "type": { "defined": "TokenType" } }
+      ]
+    },
+    {
+      "name": "purchaseTicket",
+      "accounts": [
+        { "name": "buyer", "isMut": true, "isSigner": true },
+        { "name": "event", "isMut": true, "isSigner": false },
+        { "name": "escrow", "isMut": true, "isSigner": false },
+        { "name": "ticket", "isMut": true, "isSigner": false },
+        { "name": "tokenMint", "isMut": true, "isSigner": false },
+        { "name": "buyerTokenAccount", "isMut": true, "isSigner": false },
+        { "name": "escrowTokenAccount", "isMut": true, "isSigner": false },
+        { "name": "systemProgram", "isMut": false, "isSigner": false },
+        { "name": "tokenProgram", "isMut": false, "isSigner": false }
+      ],
+      "args": [
+        { "name": "tokenType", "type": { "defined": "TokenType" } }
+      ]
+    },
+    {
+      "name": "releaseMilestone",
+      "accounts": [
+        { "name": "organizer", "isMut": true, "isSigner": true },
+        { "name": "event", "isMut": true, "isSigner": false },
+        { "name": "escrow", "isMut": true, "isSigner": false },
+        { "name": "milestone", "isMut": true, "isSigner": false },
+        { "name": "tokenMint", "isMut": true, "isSigner": false },
+        { "name": "escrowTokenAccount", "isMut": true, "isSigner": false },
+        { "name": "organizerTokenAccount", "isMut": true, "isSigner": false },
+        { "name": "systemProgram", "isMut": false, "isSigner": false },
+        { "name": "tokenProgram", "isMut": false, "isSigner": false }
+      ],
+      "args": [
+        { "name": "milestoneIndex", "type": "u8" }
+      ]
+    },
+    {
+      "name": "claimRefund",
+      "accounts": [
+        { "name": "contributor", "isMut": true, "isSigner": true },
+        { "name": "event", "isMut": true, "isSigner": false },
+        { "name": "escrow", "isMut": true, "isSigner": false },
+        { "name": "contributorAccount", "isMut": true, "isSigner": false },
+        { "name": "tokenMint", "isMut": true, "isSigner": false },
+        { "name": "escrowTokenAccount", "isMut": true, "isSigner": false },
+        { "name": "contributorTokenAccount", "isMut": true, "isSigner": false },
+        { "name": "systemProgram", "isMut": false, "isSigner": false },
+        { "name": "tokenProgram", "isMut": false, "isSigner": false }
+      ],
+      "args": []
+    },
+    {
+      "name": "finalizeFunding",
+      "accounts": [
+        { "name": "organizer", "isMut": true, "isSigner": true },
+        { "name": "event", "isMut": true, "isSigner": false },
+        { "name": "systemProgram", "isMut": false, "isSigner": false }
+      ],
+      "args": []
+    },
+    {
+      "name": "submitBudget",
+      "accounts": [
+        { "name": "organizer", "isMut": true, "isSigner": true },
+        { "name": "event", "isMut": true, "isSigner": false },
+        { "name": "budget", "isMut": true, "isSigner": false },
+        { "name": "systemProgram", "isMut": false, "isSigner": false }
+      ],
+      "args": [
+        { "name": "totalAmount", "type": "u64" }
+      ]
+    },
+    {
+      "name": "voteOnBudget",
+      "accounts": [
+        { "name": "voter", "isMut": true, "isSigner": true },
+        { "name": "event", "isMut": true, "isSigner": false },
+        { "name": "budget", "isMut": true, "isSigner": false },
+        { "name": "contributor", "isMut": false, "isSigner": false },
+        { "name": "vote", "isMut": true, "isSigner": false },
+        { "name": "systemProgram", "isMut": false, "isSigner": false }
+      ],
+      "args": [
+        { "name": "approve", "type": "bool" }
+      ]
+    },
+    {
+      "name": "addMilestone",
+      "accounts": [
+        { "name": "organizer", "isMut": true, "isSigner": true },
+        { "name": "event", "isMut": true, "isSigner": false },
+        { "name": "milestone", "isMut": true, "isSigner": false },
+        { "name": "systemProgram", "isMut": false, "isSigner": false }
+      ],
+      "args": [
+        { "name": "milestoneIndex", "type": "u8" },
+        { "name": "description", "type": "string" },
+        { "name": "amount", "type": "u64" },
+        { "name": "dueDate", "type": "i64" },
+        { "name": "tokenType", "type": { "defined": "TokenType" } }
+      ]
+    },
+    {
+      "name": "checkInTicket",
+      "accounts": [
+        { "name": "organizer", "isMut": false, "isSigner": true },
+        { "name": "event", "isMut": true, "isSigner": false },
+        { "name": "ticket", "isMut": true, "isSigner": false }
+      ],
+      "args": []
+    },
+    {
+      "name": "finalizeEvent",
+      "accounts": [
+        { "name": "organizer", "isMut": true, "isSigner": true },
+        { "name": "event", "isMut": true, "isSigner": false },
+        { "name": "escrow", "isMut": false, "isSigner": false },
+        { "name": "profitDistribution", "isMut": true, "isSigner": false },
+        { "name": "systemProgram", "isMut": false, "isSigner": false }
+      ],
+      "args": [
+        { "name": "totalRevenue", "type": "u64" }
+      ]
+    },
+    {
+      "name": "updateEvent",
+      "accounts": [
+        { "name": "organizer", "isMut": true, "isSigner": true },
+        { "name": "event", "isMut": true, "isSigner": false }
+      ],
+      "args": [
+        { "name": "name", "type": { "option": "string" } },
+        { "name": "description", "type": { "option": "string" } },
+        { "name": "location", "type": { "option": "string" } },
+        { "name": "eventDate", "type": { "option": "i64" } }
+      ]
+    },
+    {
+      "name": "cancelEvent",
+      "accounts": [
+        { "name": "organizer", "isMut": true, "isSigner": true },
+        { "name": "event", "isMut": true, "isSigner": false }
+      ],
+      "args": []
+    }
+  ],
+  "accounts": [
+    {
+      "name": "PlatformConfig",
+      "type": {
+        "kind": "struct",
+        "fields": [
+          { "name": "admin", "type": "publicKey" },
+          { "name": "treasury", "type": "publicKey" },
+          { "name": "feePercentage", "type": "u8" },
+          { "name": "royaltyPercentage", "type": "u8" },
+          { "name": "totalFeesCollected", "type": "u64" },
+          { "name": "totalVolume", "type": "u64" },
+          { "name": "paused", "type": "bool" },
+          { "name": "bump", "type": "u8" }
+        ]
+      }
+    },
+    {
+      "name": "Event",
+      "type": {
+        "kind": "struct",
+        "fields": [
+          { "name": "organizer", "type": "publicKey" },
+          { "name": "eventId", "type": "u64" },
+          { "name": "name", "type": "string" },
+          { "name": "description", "type": "string" },
+          { "name": "targetAmount", "type": "u64" },
+          { "name": "amountRaised", "type": "u64" },
+          { "name": "ticketPrice", "type": "u64" },
+          { "name": "ticketsSold", "type": "u32" },
+          { "name": "maxTickets", "type": "u32" },
+          { "name": "location", "type": "string" },
+          { "name": "eventDate", "type": "i64" },
+          { "name": "status", "type": { "defined": "EventStatus" } },
+          { "name": "acceptedTokens", "type": { "vec": { "defined": "TokenType" } } },
+          { "name": "budgetApproved", "type": "bool" },
+          { "name": "fundingDeadline", "type": "i64" },
+          { "name": "totalVotes", "type": "u64" },
+          { "name": "yesVotes", "type": "u64" },
+          { "name": "noVotes", "type": "u64" },
+          { "name": "platformFeeAmount", "type": "u64" },
+          { "name": "ticketMint", "type": { "option": "publicKey" } },
+          { "name": "escrowBump", "type": "u8" },
+          { "name": "eventBump", "type": "u8" }
+        ]
+      }
+    },
+    {
+      "name": "Contributor",
+      "type": {
+        "kind": "struct",
+        "fields": [
+          { "name": "event", "type": "publicKey" },
+          { "name": "contributor", "type": "publicKey" },
+          { "name": "amount", "type": "u64" },
+          { "name": "votingPower", "type": "u64" },
+          { "name": "tokenType", "type": { "defined": "TokenType" } },
+          { "name": "profitsClaimed", "type": "u64" },
+          { "name": "refundClaimed", "type": "bool" },
+          { "name": "bump", "type": "u8" }
+        ]
+      }
+    },
+    {
+      "name": "Ticket",
+      "type": {
+        "kind": "struct",
+        "fields": [
+          { "name": "mint", "type": "publicKey" },
+          { "name": "event", "type": "publicKey" },
+          { "name": "owner", "type": "publicKey" },
+          { "name": "ticketNumber", "type": "u32" },
+          { "name": "checkedIn", "type": "bool" },
+          { "name": "pricePaid", "type": "u64" },
+          { "name": "tokenType", "type": { "defined": "TokenType" } },
+          { "name": "refunded", "type": "bool" },
+          { "name": "bump", "type": "u8" }
+        ]
+      }
+    },
+    {
+      "name": "Budget",
+      "type": {
+        "kind": "struct",
+        "fields": [
+          { "name": "event", "type": "publicKey" },
+          { "name": "totalAmount", "type": "u64" },
+          { "name": "approved", "type": "bool" },
+          { "name": "submittedAt", "type": "i64" },
+          { "name": "bump", "type": "u8" }
+        ]
+      }
+    },
+    {
+      "name": "Milestone",
+      "type": {
+        "kind": "struct",
+        "fields": [
+          { "name": "event", "type": "publicKey" },
+          { "name": "index", "type": "u8" },
+          { "name": "description", "type": "string" },
+          { "name": "amount", "type": "u64" },
+          { "name": "dueDate", "type": "i64" },
+          { "name": "tokenType", "type": { "defined": "TokenType" } },
+          { "name": "released", "type": "bool" },
+          { "name": "releaseDate", "type": { "option": "i64" } },
+          { "name": "bump", "type": "u8" }
+        ]
+      }
+    },
+    {
+      "name": "ProfitDistribution",
+      "type": {
+        "kind": "struct",
+        "fields": [
+          { "name": "event", "type": "publicKey" },
+          { "name": "totalRevenue", "type": "u64" },
+          { "name": "expenses", "type": "u64" },
+          { "name": "netProfit", "type": "u64" },
+          { "name": "backersShare", "type": "u64" },
+          { "name": "organizerShare", "type": "u64" },
+          { "name": "platformShare", "type": "u64" },
+          { "name": "distributed", "type": "bool" },
+          { "name": "distributionDate", "type": "i64" },
+          { "name": "bump", "type": "u8" }
+        ]
+      }
+    },
+    {
+      "name": "Escrow",
+      "type": {
+        "kind": "struct",
+        "fields": [
+          { "name": "event", "type": "publicKey" },
+          { "name": "solBalance", "type": "u64" },
+          { "name": "usdcBalance", "type": "u64" },
+          { "name": "usdtBalance", "type": "u64" },
+          { "name": "totalBalance", "type": "u64" },
+          { "name": "isInitialized", "type": "bool" },
+          { "name": "bump", "type": "u8" }
+        ]
+      }
+    },
+    {
+      "name": "Vote",
+      "type": {
+        "kind": "struct",
+        "fields": [
+          { "name": "event", "type": "publicKey" },
+          { "name": "voter", "type": "publicKey" },
+          { "name": "amount", "type": "u64" },
+          { "name": "approve", "type": "bool" },
+          { "name": "votedAt", "type": "i64" },
+          { "name": "bump", "type": "u8" }
+        ]
+      }
+    }
+  ],
+  "types": [
+    {
+      "name": "TokenType",
+      "type": {
+        "kind": "enum",
+        "variants": [
+          { "name": "SOL" },
+          { "name": "USDC" },
+          { "name": "USDT" }
+        ]
+      }
+    },
+    {
+      "name": "EventStatus",
+      "type": {
+        "kind": "enum",
+        "variants": [
+          { "name": "Draft" },
+          { "name": "Funding" },
+          { "name": "BudgetVoting" },
+          { "name": "Active" },
+          { "name": "Completed" },
+          { "name": "Cancelled" },
+          { "name": "Refunding" }
+        ]
+      }
+    }
+  ],
+  "errors": [
+    { "code": 6000, "name": "PlatformPaused", "msg": "Platform is paused" },
+    { "code": 6001, "name": "NotAuthorized", "msg": "Not authorized" },
+    { "code": 6002, "name": "InvalidNigerianCity", "msg": "Invalid Nigerian city" },
+    { "code": 6003, "name": "InsufficientFunds", "msg": "Insufficient funds" },
+    { "code": 6004, "name": "EventNotFound", "msg": "Event not found" },
+    { "code": 6005, "name": "InvalidEventStatus", "msg": "Invalid event status" },
+    { "code": 6006, "name": "FundingTargetNotReached", "msg": "Funding target not reached" },
+    { "code": 6007, "name": "FundingDeadlinePassed", "msg": "Funding deadline passed" },
+    { "code": 6008, "name": "TicketAlreadyCheckedIn", "msg": "Ticket already checked in" },
+    { "code": 6009, "name": "TicketAlreadyRefunded", "msg": "Ticket already refunded" },
+    { "code": 6010, "name": "BudgetNotSubmitted", "msg": "Budget not submitted" },
+    { "code": 6011, "name": "BudgetNotApproved", "msg": "Budget not approved" },
+    { "code": 6012, "name": "MaxTicketsExceeded", "msg": "Max tickets exceeded" },
+    { "code": 6013, "name": "ProfitsAlreadyDistributed", "msg": "Profits already distributed" },
+    { "code": 6014, "name": "NoProfitsToClaim", "msg": "No profits to claim" },
+    { "code": 6015, "name": "AlreadyVoted", "msg": "Already voted" },
+    { "code": 6016, "name": "InvalidTokenType", "msg": "Invalid token type" },
+    { "code": 6017, "name": "TokenNotAccepted", "msg": "Token not accepted for this event" },
+    { "code": 6018, "name": "InvalidMint", "msg": "Invalid mint address" },
+    { "code": 6019, "name": "InvalidTokenAccount", "msg": "Invalid token account" }
+  ]
+}
