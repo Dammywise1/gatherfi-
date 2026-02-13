@@ -1,31 +1,35 @@
 'use client';
 import { FC, ReactNode, useMemo } from 'react';
 import { ConnectionProvider, WalletProvider } from '@solana/wallet-adapter-react';
-import { WalletAdapterNetwork } from '@solana/wallet-adapter-base';
 import { 
   PhantomWalletAdapter, 
   SolflareWalletAdapter,
-  TorusWalletAdapter 
 } from '@solana/wallet-adapter-wallets';
 import { WalletModalProvider } from '@solana/wallet-adapter-react-ui';
-import { clusterApiUrl } from '@solana/web3.js';
+import '@solana/wallet-adapter-react-ui/styles.css';
 
 export const WalletContextProvider: FC<{ children: ReactNode }> = ({ children }) => {
-  const network = WalletAdapterNetwork.Devnet;
-  const endpoint = useMemo(() => clusterApiUrl(network), [network]);
-
+  // Use a reliable devnet endpoint
+  const endpoint = 'https://api.devnet.solana.com';
+  
+  // Only use wallets that work reliably on mobile via deep links
   const wallets = useMemo(
     () => [
       new PhantomWalletAdapter(),
       new SolflareWalletAdapter(),
-      new TorusWalletAdapter()
     ],
-    [network]
+    []
   );
 
   return (
     <ConnectionProvider endpoint={endpoint}>
-      <WalletProvider wallets={wallets} autoConnect>
+      <WalletProvider 
+        wallets={wallets} 
+        autoConnect={true}
+        onError={(error) => {
+          console.error('Wallet error:', error);
+        }}
+      >
         <WalletModalProvider>{children}</WalletModalProvider>
       </WalletProvider>
     </ConnectionProvider>

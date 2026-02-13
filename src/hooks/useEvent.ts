@@ -6,6 +6,7 @@ import { EventStatus } from '@/types/gatherfi';
 import { cacheManager } from '@/utils/cache-manager';
 import { withRetry } from '@/utils/retry';
 import { BN } from '@coral-xyz/anchor';
+import { useWallet } from '@solana/wallet-adapter-react';
 
 const CACHE_TTL = 45000;
 
@@ -22,6 +23,7 @@ export const useEvent = () => {
   const { getProgramWithSigner } = useGatherFiProgram();
   const { getProgram: getReadOnlyProgram } = useGatherFiProgramReadOnly();
   const { success, error } = useToast();
+  const { publicKey, connected, wallet } = useWallet();
 
   const createEvent = async (
     eventId: number,
@@ -35,14 +37,21 @@ export const useEvent = () => {
     acceptedTokens: TokenType[]
   ) => {
     try {
+      if (!connected || !publicKey) {
+        throw new Error('Please connect your wallet first');
+      }
+
+      console.log('Creating event with wallet:', wallet?.adapter?.name);
+      
       const program = getProgramWithSigner();
-      const [eventPda] = findEventPDA(program.provider.publicKey, eventId);
+      const [eventPda] = findEventPDA(publicKey, eventId);
       const [escrowPda] = findEscrowPDA(eventPda);
 
       const targetAmountLamports = Math.floor(targetAmount * 1e9);
       const ticketPriceLamports = Math.floor(ticketPrice * 1e9);
       const anchorTokens = acceptedTokens.map(t => toAnchorTokenType(t));
 
+      // For mobile wallets, we need to ensure the transaction is built properly
       const tx = await program.methods
         .createEvent(
           new BN(eventId),
@@ -56,19 +65,37 @@ export const useEvent = () => {
           anchorTokens
         )
         .accounts({
-          organizer: program.provider.publicKey,
+          organizer: publicKey,
           event: eventPda,
           escrow: escrowPda,
           systemProgram: PublicKey.default
         })
-        .rpc();
+        .rpc()
+        .catch((err) => {
+          console.error('Transaction error:', err);
+          if (err.message?.includes('signature') || err.message?.includes('Missing signature')) {
+            throw new Error('Please open your wallet app and approve the transaction');
+          }
+          throw err;
+        });
 
+      console.log('Transaction successful:', tx);
       cacheManager.clear();
       success('Event created successfully!');
       return { tx, eventPda, escrowPda };
     } catch (err: any) {
       console.error('Create event error:', err);
-      error(err.message || 'Failed to create event');
+      
+      // User-friendly error messages for mobile
+      if (err.message?.includes('signature') || err.message?.includes('Missing signature')) {
+        error('Please open your wallet app and approve the transaction');
+      } else if (err.message?.includes('connected')) {
+        error('Please connect your wallet');
+      } else if (err.message?.includes('Network') || err.message?.includes('429')) {
+        error('Network error. Please try again');
+      } else {
+        error(err.message || 'Failed to create event');
+      }
       throw err;
     }
   };
