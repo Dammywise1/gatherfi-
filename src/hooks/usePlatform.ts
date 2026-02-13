@@ -2,17 +2,27 @@ import { useGatherFiProgram, findPlatformConfigPDA } from '@/utils/anchor';
 import { PublicKey } from '@solana/web3.js';
 import { useToast } from '@/contexts/ToastContext';
 import { useWallet } from '@solana/wallet-adapter-react';
+import { cacheManager } from '@/utils/cache-manager';
+import { withRetry } from '@/utils/retry';
+
+const CACHE_TTL = 45000;
 
 export const usePlatform = () => {
-  const { getProgramWithSigner, PROGRAM_ID } = useGatherFiProgram();
+  const { getProgramWithSigner } = useGatherFiProgram();
   const { success, error } = useToast();
   const { publicKey } = useWallet();
 
   const getPlatformConfig = async () => {
+    const cacheKey = 'platform_config';
+    const cached = await cacheManager.get(cacheKey, CACHE_TTL);
+    if (cached) return cached;
+
     try {
       const program = getProgramWithSigner();
       const [configPda] = findPlatformConfigPDA();
-      return await program.account.platformConfig.fetch(configPda);
+      const config = await withRetry(() => program.account.platformConfig.fetch(configPda));
+      cacheManager.set(cacheKey, config);
+      return config;
     } catch (err) {
       console.error('Error fetching platform config:', err);
       throw err;
@@ -32,6 +42,7 @@ export const usePlatform = () => {
         })
         .rpc();
       
+      cacheManager.clear();
       success('Platform pause toggled successfully');
       return tx;
     } catch (err: any) {
@@ -53,6 +64,7 @@ export const usePlatform = () => {
         })
         .rpc();
       
+      cacheManager.clear();
       success('Token mints updated successfully');
       return tx;
     } catch (err: any) {
@@ -78,6 +90,7 @@ export const usePlatform = () => {
         })
         .rpc();
       
+      cacheManager.clear();
       success('Fees withdrawn successfully');
       return tx;
     } catch (err: any) {

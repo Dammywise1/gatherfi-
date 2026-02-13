@@ -8,11 +8,6 @@ const config: Config = {
   ],
   theme: {
     extend: {
-      colors: {
-        border: 'hsl(var(--border))',
-        background: 'hsl(var(--background))',
-        foreground: 'hsl(var(--foreground))',
-      },
       animation: {
         'spin': 'spin 1s linear infinite',
       },
@@ -26,4 +21,5 @@ const config: Config = {
   },
   plugins: [],
 }
+
 export default config

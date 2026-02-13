@@ -1,15 +1,28 @@
-import { useGatherFiProgram, useGatherFiProgramReadOnly, findEventPDA, findEscrowPDA, findBudgetPDA } from '@/utils/anchor';
+import { useGatherFiProgram, useGatherFiProgramReadOnly, findEventPDA, findEscrowPDA } from '@/utils/anchor';
 import { PublicKey } from '@solana/web3.js';
 import { TokenType } from '@/utils/tokens';
 import { useToast } from '@/contexts/ToastContext';
 import { EventStatus } from '@/types/gatherfi';
+import { cacheManager } from '@/utils/cache-manager';
+import { withRetry } from '@/utils/retry';
+import { BN } from '@coral-xyz/anchor';
+
+const CACHE_TTL = 45000;
+
+function toAnchorTokenType(token: TokenType): any {
+  switch (token) {
+    case TokenType.SOL: return { sol: {} };
+    case TokenType.USDC: return { usdc: {} };
+    case TokenType.USDT: return { usdt: {} };
+    default: return { sol: {} };
+  }
+}
 
 export const useEvent = () => {
   const { getProgramWithSigner } = useGatherFiProgram();
   const { getProgram: getReadOnlyProgram } = useGatherFiProgramReadOnly();
   const { success, error } = useToast();
 
-  // CREATE operations (need signer)
   const createEvent = async (
     eventId: number,
     name: string,
@@ -26,17 +39,21 @@ export const useEvent = () => {
       const [eventPda] = findEventPDA(program.provider.publicKey, eventId);
       const [escrowPda] = findEscrowPDA(eventPda);
 
+      const targetAmountLamports = Math.floor(targetAmount * 1e9);
+      const ticketPriceLamports = Math.floor(ticketPrice * 1e9);
+      const anchorTokens = acceptedTokens.map(t => toAnchorTokenType(t));
+
       const tx = await program.methods
         .createEvent(
-          eventId,
+          new BN(eventId),
           name,
           description,
-          targetAmount,
-          ticketPrice,
+          new BN(targetAmountLamports),
+          new BN(ticketPriceLamports),
           maxTickets,
           location,
-          eventDate,
-          acceptedTokens
+          new BN(eventDate),
+          anchorTokens
         )
         .accounts({
           organizer: program.provider.publicKey,
@@ -46,19 +63,25 @@ export const useEvent = () => {
         })
         .rpc();
 
+      cacheManager.clear();
       success('Event created successfully!');
       return { tx, eventPda, escrowPda };
     } catch (err: any) {
+      console.error('Create event error:', err);
       error(err.message || 'Failed to create event');
       throw err;
     }
   };
 
-  // READ operations (don't need signer)
   const getEvent = async (eventPda: PublicKey) => {
+    const cacheKey = `event_${eventPda.toBase58()}`;
+    const cached = await cacheManager.get(cacheKey, CACHE_TTL);
+    if (cached) return cached;
     try {
       const program = getReadOnlyProgram();
-      return await program.account.event.fetch(eventPda);
+      const event = await withRetry(() => program.account.event.fetch(eventPda));
+      cacheManager.set(cacheKey, event);
+      return event;
     } catch (err) {
       console.error('Error fetching event:', err);
       throw err;
@@ -66,10 +89,15 @@ export const useEvent = () => {
   };
 
   const getAllEvents = async () => {
+    const cacheKey = 'all_events';
+    const cached = await cacheManager.get(cacheKey, CACHE_TTL);
+    if (cached) return cached;
     try {
       const program = getReadOnlyProgram();
-      const events = await program.account.event.all();
-      return events.sort((a, b) => Number(b.account.eventId) - Number(a.account.eventId));
+      const events = await withRetry(() => program.account.event.all());
+      const sorted = events.sort((a, b) => Number(b.account.eventId) - Number(a.account.eventId));
+      cacheManager.set(cacheKey, sorted);
+      return sorted;
     } catch (err) {
       console.error('Error fetching events:', err);
       return [];
@@ -77,16 +105,15 @@ export const useEvent = () => {
   };
 
   const getEventsByOrganizer = async (organizer: PublicKey) => {
+    const cacheKey = `organizer_${organizer.toBase58()}`;
+    const cached = await cacheManager.get(cacheKey, CACHE_TTL);
+    if (cached) return cached;
     try {
       const program = getReadOnlyProgram();
-      const events = await program.account.event.all([
-        {
-          memcmp: {
-            offset: 8,
-            bytes: organizer.toBase58()
-          }
-        }
-      ]);
+      const events = await withRetry(() => program.account.event.all([
+        { memcmp: { offset: 8, bytes: organizer.toBase58() } }
+      ]));
+      cacheManager.set(cacheKey, events);
       return events;
     } catch (err) {
       console.error('Error fetching organizer events:', err);
@@ -95,122 +122,26 @@ export const useEvent = () => {
   };
 
   const getEventsByStatus = async (status: EventStatus) => {
+    const cacheKey = `status_${status}`;
+    const cached = await cacheManager.get(cacheKey, CACHE_TTL);
+    if (cached) return cached;
     try {
       const program = getReadOnlyProgram();
-      const events = await program.account.event.all();
-      return events.filter(e => e.account.status === status);
+      const events = await withRetry(() => program.account.event.all());
+      const filtered = events.filter(e => e.account.status === status);
+      cacheManager.set(cacheKey, filtered);
+      return filtered;
     } catch (err) {
       console.error('Error fetching events by status:', err);
       return [];
     }
   };
 
-  // UPDATE operations (need signer)
-  const updateEvent = async (
-    eventPda: PublicKey,
-    name?: string,
-    description?: string,
-    location?: string,
-    eventDate?: number
-  ) => {
-    try {
-      const program = getProgramWithSigner();
-      
-      const tx = await program.methods
-        .updateEvent(
-          name ? name : null,
-          description ? description : null,
-          location ? location : null,
-          eventDate ? eventDate : null
-        )
-        .accounts({
-          organizer: program.provider.publicKey,
-          event: eventPda
-        })
-        .rpc();
-
-      success('Event updated successfully');
-      return tx;
-    } catch (err: any) {
-      error(err.message || 'Failed to update event');
-      throw err;
-    }
-  };
-
-  const cancelEvent = async (eventPda: PublicKey) => {
-    try {
-      const program = getProgramWithSigner();
-      
-      const tx = await program.methods
-        .cancelEvent()
-        .accounts({
-          organizer: program.provider.publicKey,
-          event: eventPda
-        })
-        .rpc();
-
-      success('Event cancelled successfully');
-      return tx;
-    } catch (err: any) {
-      error(err.message || 'Failed to cancel event');
-      throw err;
-    }
-  };
-
-  const finalizeFunding = async (eventPda: PublicKey) => {
-    try {
-      const program = getProgramWithSigner();
-      
-      const tx = await program.methods
-        .finalizeFunding()
-        .accounts({
-          organizer: program.provider.publicKey,
-          event: eventPda,
-          systemProgram: PublicKey.default
-        })
-        .rpc();
-
-      success('Funding finalized! Moving to budget voting.');
-      return tx;
-    } catch (err: any) {
-      error(err.message || 'Failed to finalize funding');
-      throw err;
-    }
-  };
-
-  const finalizeFundingFailure = async (eventPda: PublicKey) => {
-    try {
-      const program = getProgramWithSigner();
-      
-      const tx = await program.methods
-        .finalizeFundingFailure()
-        .accounts({
-          caller: program.provider.publicKey,
-          event: eventPda,
-          systemProgram: PublicKey.default
-        })
-        .rpc();
-
-      success('Event marked as failed');
-      return tx;
-    } catch (err: any) {
-      error(err.message || 'Failed to mark event as failed');
-      throw err;
-    }
-  };
-
   return {
-    // Create
     createEvent,
-    // Read
     getEvent,
     getAllEvents,
     getEventsByOrganizer,
     getEventsByStatus,
-    // Update
-    updateEvent,
-    cancelEvent,
-    finalizeFunding,
-    finalizeFundingFailure
   };
 };

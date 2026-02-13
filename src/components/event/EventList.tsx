@@ -5,51 +5,39 @@ import { EventCard } from './EventCard';
 import { LoadingSpinner } from '@/components/ui/LoadingSpinner';
 import { EventStatus } from '@/types/gatherfi';
 
-interface EventData {
-  publicKey: any;
-  account: any;
-}
-
 export const EventList = ({ statusFilter }: { statusFilter?: EventStatus }) => {
   const { getAllEvents, getEventsByStatus } = useEvent();
-  const [events, setEvents] = useState<EventData[]>([]);
+  const [events, setEvents] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
+    let mounted = true;
+    
     const fetchEvents = async () => {
       try {
-        setLoading(true);
         const fetchedEvents = statusFilter 
           ? await getEventsByStatus(statusFilter)
           : await getAllEvents();
         
-        // Handle different possible data structures
-        let processedEvents: EventData[] = [];
-        
-        if (Array.isArray(fetchedEvents)) {
-          processedEvents = fetchedEvents
-            .map(event => {
-              // Handle both {pubkey, account} and {publicKey, account} formats
-              const publicKey = event.publicKey || event.pubkey;
-              const account = event.account;
-              
-              if (publicKey && account) {
-                return { publicKey, account };
-              }
-              return null;
-            })
-            .filter(Boolean) as EventData[];
+        if (mounted) {
+          const processedEvents = fetchedEvents
+            .map(event => ({
+              publicKey: event.publicKey,
+              account: event.account
+            }))
+            .filter(Boolean);
+          setEvents(processedEvents);
         }
-        
-        setEvents(processedEvents);
       } catch (error) {
         console.error('Error fetching events:', error);
-        setEvents([]);
       } finally {
-        setLoading(false);
+        if (mounted) setLoading(false);
       }
     };
+
     fetchEvents();
+    
+    return () => { mounted = false; };
   }, [statusFilter, getAllEvents, getEventsByStatus]);
 
   if (loading) return <LoadingSpinner />;

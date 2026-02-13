@@ -1,13 +1,13 @@
 'use client';
 import { useState } from 'react';
-import { TokenType, parseTokenAmount, formatTokenAmount } from '@/utils/tokens';
+import { TokenType, parseTokenAmount, formatTokenAmount, getTokenTypeString } from '@/utils/tokens';
 import { useContribution } from '@/hooks/useContribution';
 import { PublicKey } from '@solana/web3.js';
 import { useWallet } from '@solana/wallet-adapter-react';
 
 interface ContributionFormProps {
   eventPda: PublicKey;
-  acceptedTokens: TokenType[];
+  acceptedTokens: string[] | TokenType[];
   targetAmount: number;
   amountRaised: number;
 }
@@ -21,7 +21,9 @@ export const ContributionForm = ({
   const { contribute } = useContribution();
   const { publicKey } = useWallet();
   const [amount, setAmount] = useState('');
-  const [selectedToken, setSelectedToken] = useState<TokenType>(acceptedTokens[0] || TokenType.SOL);
+  const [selectedToken, setSelectedToken] = useState<string>(
+    typeof acceptedTokens[0] === 'string' ? acceptedTokens[0] as string : 'SOL'
+  );
   const [loading, setLoading] = useState(false);
 
   const handleSubmit = async (e: React.FormEvent) => {
@@ -33,8 +35,8 @@ export const ContributionForm = ({
 
     setLoading(true);
     try {
-      const parsedAmount = parseTokenAmount(amount, selectedToken);
-      await contribute(eventPda, parsedAmount, selectedToken);
+      const parsedAmount = parseTokenAmount(amount, selectedToken as TokenType);
+      await contribute(eventPda, parsedAmount, selectedToken as TokenType);
       setAmount('');
     } catch (error) {
       console.error('Contribution failed:', error);
@@ -61,20 +63,23 @@ export const ContributionForm = ({
             Select Token
           </label>
           <div className="flex gap-2">
-            {acceptedTokens.map((token) => (
-              <button
-                key={token}
-                type="button"
-                onClick={() => setSelectedToken(token)}
-                className={`flex-1 py-2 px-4 rounded-md border ${
-                  selectedToken === token
-                    ? 'bg-blue-600 text-white border-blue-600'
-                    : 'bg-white text-gray-700 border-gray-300 hover:bg-gray-50'
-                }`}
-              >
-                {token}
-              </button>
-            ))}
+            {acceptedTokens.map((token) => {
+              const tokenStr = typeof token === 'string' ? token : getTokenTypeString(token);
+              return (
+                <button
+                  key={tokenStr}
+                  type="button"
+                  onClick={() => setSelectedToken(tokenStr)}
+                  className={`flex-1 py-2 px-4 rounded-md border ${
+                    selectedToken === tokenStr
+                      ? 'bg-blue-600 text-white border-blue-600'
+                      : 'bg-white text-gray-700 border-gray-300 hover:bg-gray-50'
+                  }`}
+                >
+                  {tokenStr}
+                </button>
+              );
+            })}
           </div>
         </div>
 

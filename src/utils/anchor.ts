@@ -5,7 +5,7 @@ import idl from '@/idl/gatherfi.json';
 
 export const PROGRAM_ID = new PublicKey(process.env.NEXT_PUBLIC_PROGRAM_ID!);
 
-// Read-only version - doesn't need wallet
+// Read-only version
 export function useGatherFiProgramReadOnly() {
   const { connection } = useConnection();
 
@@ -26,7 +26,7 @@ export function useGatherFiProgramReadOnly() {
   return { getProgram, PROGRAM_ID };
 }
 
-// Write version - needs wallet for transactions
+// Write version
 export function useGatherFiProgram() {
   const { connection } = useConnection();
   const wallet = useWallet();
@@ -56,7 +56,10 @@ export function useGatherFiProgram() {
   return { getProgram, getProgramWithSigner, PROGRAM_ID };
 }
 
-// PDA finders
+// ============================================
+// ALL PDA FINDER FUNCTIONS
+// ============================================
+
 export function findEventPDA(organizer: PublicKey, eventId: number): [PublicKey, number] {
   return PublicKey.findProgramAddressSync(
     [Buffer.from('event'), organizer.toBuffer(), Buffer.from(eventId.toString())],
