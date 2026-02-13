@@ -35,40 +35,67 @@ export function useGatherFiProgram() {
   return { getProgram, getProgramWithSigner, PROGRAM_ID };
 }
 
-function bnToLeBuffer(bn: BN, length: number): Buffer {
-  const buf = Buffer.alloc(length);
-  const bnStr = bn.toString(16).padStart(length * 2, '0');
-  for (let i = 0; i < length; i++) {
-    buf[i] = parseInt(bnStr.substr(i * 2, 2), 16);
+// Helper to create Uint8Array from string (ASCII)
+function stringToUint8Array(str: string): Uint8Array {
+  const arr = new Uint8Array(str.length);
+  for (let i = 0; i < str.length; i++) {
+    arr[i] = str.charCodeAt(i);
   }
-  return buf;
+  return arr;
+}
+
+// Helper to create Uint8Array from BN (little-endian)
+function bnToUint8Array(bn: BN, length: number): Uint8Array {
+  const arr = new Uint8Array(length);
+  const bytes = bn.toArray('le', length);
+  for (let i = 0; i < bytes.length; i++) {
+    arr[i] = bytes[i];
+  }
+  return arr;
 }
 
 export function findEventPDA(organizer: PublicKey, eventId: BN): [PublicKey, number] {
-  const eventIdBuffer = bnToLeBuffer(eventId, 8);
-  return PublicKey.findProgramAddressSync(
-    [Buffer.from('event'), organizer.toBuffer(), eventIdBuffer],
-    PROGRAM_ID
-  );
+  // Convert seeds to Uint8Array
+  const eventSeed = stringToUint8Array('event');
+  const organizerBytes = organizer.toBytes();
+  const eventIdBytes = bnToUint8Array(eventId, 8);
+  
+  console.log('🔍 PDA Calculation:');
+  console.log('Event seed:', Array.from(eventSeed));
+  console.log('Organizer:', organizer.toString());
+  console.log('Event ID:', eventId.toString());
+  console.log('Event ID bytes:', Array.from(eventIdBytes));
+  
+  const seeds = [
+    eventSeed,
+    organizerBytes,
+    eventIdBytes
+  ];
+  
+  const [pda, bump] = PublicKey.findProgramAddressSync(seeds, PROGRAM_ID);
+  console.log('✅ Calculated PDA:', pda.toString());
+  console.log('Bump:', bump);
+  
+  return [pda, bump];
 }
 
 export function findEscrowPDA(event: PublicKey): [PublicKey, number] {
   return PublicKey.findProgramAddressSync(
-    [Buffer.from('escrow'), event.toBuffer()],
+    [stringToUint8Array('escrow'), event.toBytes()],
     PROGRAM_ID
   );
 }
 
 export function findContributorPDA(event: PublicKey, contributor: PublicKey): [PublicKey, number] {
   return PublicKey.findProgramAddressSync(
-    [Buffer.from('contributor'), event.toBuffer(), contributor.toBuffer()],
+    [stringToUint8Array('contributor'), event.toBytes(), contributor.toBytes()],
     PROGRAM_ID
   );
 }
 
 export function findPlatformConfigPDA(): [PublicKey, number] {
   return PublicKey.findProgramAddressSync(
-    [Buffer.from('platform')],
+    [stringToUint8Array('platform')],
     PROGRAM_ID
   );
 }

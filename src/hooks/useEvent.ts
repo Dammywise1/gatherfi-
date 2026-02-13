@@ -23,7 +23,38 @@ export const useEvent = () => {
   const { getProgramWithSigner } = useGatherFiProgram();
   const { getProgram: getReadOnlyProgram } = useGatherFiProgramReadOnly();
   const { success, error } = useToast();
-  const { publicKey, connected, wallet } = useWallet();
+  const { publicKey, connected } = useWallet();
+
+  const getNextEventId = async (organizer: PublicKey): Promise<BN> => {
+    try {
+      const program = getReadOnlyProgram();
+      const events = await program.account.event.all([
+        {
+          memcmp: {
+            offset: 8,
+            bytes: organizer.toBase58()
+          }
+        }
+      ]);
+      
+      console.log(`Found ${events.length} existing events for organizer`);
+      
+      let maxId = new BN(0);
+      events.forEach(event => {
+        const id = event.account.eventId;
+        if (id.cmp(maxId) > 0) {
+          maxId = id;
+        }
+      });
+      
+      const nextId = maxId.add(new BN(1));
+      console.log('Next event ID:', nextId.toString());
+      return nextId;
+    } catch (err) {
+      console.error('Error getting next event ID:', err);
+      return new BN(1);
+    }
+  };
 
   const createEvent = async (
     eventId: number,
@@ -41,27 +72,35 @@ export const useEvent = () => {
         throw new Error('Please connect your wallet first');
       }
 
-      console.log('Creating event with wallet:', wallet?.adapter?.name);
+      const eventIdBN = await getNextEventId(publicKey);
       
-      const program = getProgramWithSigner();
-      const [eventPda] = findEventPDA(publicKey, eventId);
-      const [escrowPda] = findEscrowPDA(eventPda);
-
       const targetAmountLamports = Math.floor(targetAmount * 1e9);
       const ticketPriceLamports = Math.floor(ticketPrice * 1e9);
+      const targetAmountBN = new BN(targetAmountLamports);
+      const ticketPriceBN = new BN(ticketPriceLamports);
+      const eventDateBN = new BN(eventDate);
+      
+      const [eventPda, eventBump] = findEventPDA(publicKey, eventIdBN);
+      const [escrowPda, escrowBump] = findEscrowPDA(eventPda);
+
+      console.log('🚀 Creating event with sequential ID:', eventIdBN.toString());
+      console.log('Event PDA:', eventPda.toString());
+      console.log('Escrow PDA:', escrowPda.toString());
+
       const anchorTokens = acceptedTokens.map(t => toAnchorTokenType(t));
 
-      // For mobile wallets, we need to ensure the transaction is built properly
+      const program = getProgramWithSigner();
+      
       const tx = await program.methods
         .createEvent(
-          new BN(eventId),
+          eventIdBN,
           name,
           description,
-          new BN(targetAmountLamports),
-          new BN(ticketPriceLamports),
+          targetAmountBN,
+          ticketPriceBN,
           maxTickets,
           location,
-          new BN(eventDate),
+          eventDateBN,
           anchorTokens
         )
         .accounts({
@@ -70,32 +109,15 @@ export const useEvent = () => {
           escrow: escrowPda,
           systemProgram: PublicKey.default
         })
-        .rpc()
-        .catch((err) => {
-          console.error('Transaction error:', err);
-          if (err.message?.includes('signature') || err.message?.includes('Missing signature')) {
-            throw new Error('Please open your wallet app and approve the transaction');
-          }
-          throw err;
-        });
+        .rpc();
 
       console.log('Transaction successful:', tx);
       cacheManager.clear();
-      success('Event created successfully!');
+      success(`Event #${eventIdBN.toString()} created successfully!`);
       return { tx, eventPda, escrowPda };
     } catch (err: any) {
       console.error('Create event error:', err);
-      
-      // User-friendly error messages for mobile
-      if (err.message?.includes('signature') || err.message?.includes('Missing signature')) {
-        error('Please open your wallet app and approve the transaction');
-      } else if (err.message?.includes('connected')) {
-        error('Please connect your wallet');
-      } else if (err.message?.includes('Network') || err.message?.includes('429')) {
-        error('Network error. Please try again');
-      } else {
-        error(err.message || 'Failed to create event');
-      }
+      error(err.message || 'Failed to create event');
       throw err;
     }
   };

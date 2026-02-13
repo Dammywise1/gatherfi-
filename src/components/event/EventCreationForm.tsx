@@ -41,16 +41,23 @@ export const EventCreationForm = () => {
 
     setLoading(true);
     try {
-      const eventId = Date.now();
+      // Note: eventId parameter is now ignored in the hook - we use sequential IDs
+      const dummyEventId = 0; // This will be ignored
+      
+      const targetAmount = Number(formData.targetAmount);
+      const ticketPrice = Number(formData.ticketPrice);
+      const maxTickets = Number(formData.maxTickets);
+      const eventDateTimestamp = Math.floor(new Date(formData.eventDate).getTime() / 1000);
+
       const { eventPda } = await createEvent(
-        eventId,
+        dummyEventId, // This is ignored - hook uses sequential IDs
         formData.name,
         formData.description,
-        Number(formData.targetAmount),
-        Number(formData.ticketPrice),
-        Number(formData.maxTickets),
+        targetAmount,
+        ticketPrice,
+        maxTickets,
         formData.location,
-        new Date(formData.eventDate).getTime() / 1000,
+        eventDateTimestamp,
         formData.acceptedTokens
       );
       
@@ -76,7 +83,7 @@ export const EventCreationForm = () => {
   return (
     <div className="bg-white rounded-lg shadow-md p-8">
       <h2 className="text-2xl font-bold mb-6">Create New Event</h2>
-      
+
       <form onSubmit={handleSubmit} className="space-y-6">
         <div>
           <label className="block text-sm font-medium text-gray-700 mb-2">
@@ -101,7 +108,7 @@ export const EventCreationForm = () => {
             onChange={(e) => setFormData({...formData, description: e.target.value})}
             rows={4}
             className="w-full p-3 border border-gray-300 rounded-md focus:ring-blue-500 focus:border-blue-500"
-            placeholder="Describe your event, its purpose, and why people should fund it..."
+            placeholder="Describe your event..."
             required
           />
         </div>
@@ -109,33 +116,32 @@ export const EventCreationForm = () => {
         <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
           <div>
             <label className="block text-sm font-medium text-gray-700 mb-2">
-              Target Amount (lamports) *
+              Target Amount (SOL) *
             </label>
             <input
               type="number"
-              min="0"
+              step="0.001"
+              min="0.001"
               value={formData.targetAmount}
               onChange={(e) => setFormData({...formData, targetAmount: e.target.value})}
               className="w-full p-3 border border-gray-300 rounded-md focus:ring-blue-500 focus:border-blue-500"
-              placeholder="1000000000"
+              placeholder="10.5"
               required
             />
-            <p className="mt-1 text-xs text-gray-500">
-              1 SOL = 1,000,000,000 lamports
-            </p>
           </div>
 
           <div>
             <label className="block text-sm font-medium text-gray-700 mb-2">
-              Ticket Price (lamports) *
+              Ticket Price (SOL) *
             </label>
             <input
               type="number"
-              min="0"
+              step="0.001"
+              min="0.001"
               value={formData.ticketPrice}
               onChange={(e) => setFormData({...formData, ticketPrice: e.target.value})}
               className="w-full p-3 border border-gray-300 rounded-md focus:ring-blue-500 focus:border-blue-500"
-              placeholder="10000000"
+              placeholder="0.1"
               required
             />
           </div>
@@ -149,6 +155,7 @@ export const EventCreationForm = () => {
             <input
               type="number"
               min="1"
+              step="1"
               value={formData.maxTickets}
               onChange={(e) => setFormData({...formData, maxTickets: e.target.value})}
               className="w-full p-3 border border-gray-300 rounded-md focus:ring-blue-500 focus:border-blue-500"
