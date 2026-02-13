@@ -5,9 +5,14 @@ import { EventCard } from './EventCard';
 import { LoadingSpinner } from '@/components/ui/LoadingSpinner';
 import { EventStatus } from '@/types/gatherfi';
 
+interface EventData {
+  publicKey: any;
+  account: any;
+}
+
 export const EventList = ({ statusFilter }: { statusFilter?: EventStatus }) => {
   const { getAllEvents, getEventsByStatus } = useEvent();
-  const [events, setEvents] = useState<any[]>([]);
+  const [events, setEvents] = useState<EventData[]>([]);
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
@@ -17,15 +22,35 @@ export const EventList = ({ statusFilter }: { statusFilter?: EventStatus }) => {
         const fetchedEvents = statusFilter 
           ? await getEventsByStatus(statusFilter)
           : await getAllEvents();
-        setEvents(fetchedEvents);
+        
+        // Handle different possible data structures
+        let processedEvents: EventData[] = [];
+        
+        if (Array.isArray(fetchedEvents)) {
+          processedEvents = fetchedEvents
+            .map(event => {
+              // Handle both {pubkey, account} and {publicKey, account} formats
+              const publicKey = event.publicKey || event.pubkey;
+              const account = event.account;
+              
+              if (publicKey && account) {
+                return { publicKey, account };
+              }
+              return null;
+            })
+            .filter(Boolean) as EventData[];
+        }
+        
+        setEvents(processedEvents);
       } catch (error) {
         console.error('Error fetching events:', error);
+        setEvents([]);
       } finally {
         setLoading(false);
       }
     };
     fetchEvents();
-  }, [statusFilter]);
+  }, [statusFilter, getAllEvents, getEventsByStatus]);
 
   if (loading) return <LoadingSpinner />;
 
@@ -39,8 +64,8 @@ export const EventList = ({ statusFilter }: { statusFilter?: EventStatus }) => {
 
   return (
     <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-      {events.map(({ pubkey, account }) => (
-        <EventCard key={pubkey.toBase58()} event={account} eventPda={pubkey} />
+      {events.map(({ publicKey, account }) => (
+        <EventCard key={publicKey.toBase58()} event={account} eventPda={publicKey} />
       ))}
     </div>
   );

@@ -1,17 +1,23 @@
 /** @type {import('next').NextConfig} */
 const nextConfig = {
   reactStrictMode: true,
-  swcMinify: true,
+  
+  // Images configuration - using remotePatterns (domains is deprecated)
   images: {
-    domains: [''],
+    remotePatterns: [
+      {
+        protocol: 'https',
+        hostname: '**',
+      },
+    ],
   },
-  webpack: (config) => {
-    config.resolve.fallback = {
-      fs: false,
-      path: false,
-      crypto: false,
-    };
-    return config;
+  
+  // Empty turbopack config to silence warnings
+  turbopack: {},
+  
+  // Optional: Add experimental features if needed
+  experimental: {
+    // turbo: {}, // Alternative way to configure turbopack
   },
 }
 

@@ -5,6 +5,28 @@ import idl from '@/idl/gatherfi.json';
 
 export const PROGRAM_ID = new PublicKey(process.env.NEXT_PUBLIC_PROGRAM_ID!);
 
+// Read-only version - doesn't need wallet
+export function useGatherFiProgramReadOnly() {
+  const { connection } = useConnection();
+
+  const getProgram = () => {
+    const provider = new AnchorProvider(
+      connection,
+      {} as any,
+      {
+        commitment: 'confirmed' as Commitment,
+        preflightCommitment: 'confirmed' as Commitment,
+      }
+    );
+    
+    setProvider(provider);
+    return new Program(idl as Idl, PROGRAM_ID, provider);
+  };
+
+  return { getProgram, PROGRAM_ID };
+}
+
+// Write version - needs wallet for transactions
 export function useGatherFiProgram() {
   const { connection } = useConnection();
   const wallet = useWallet();
@@ -22,7 +44,6 @@ export function useGatherFiProgram() {
     );
     
     setProvider(provider);
-    
     return new Program(idl as Idl, PROGRAM_ID, provider);
   };
 
@@ -32,13 +53,10 @@ export function useGatherFiProgram() {
     return program;
   };
 
-  return { 
-    getProgram, 
-    getProgramWithSigner,
-    PROGRAM_ID 
-  };
+  return { getProgram, getProgramWithSigner, PROGRAM_ID };
 }
 
+// PDA finders
 export function findEventPDA(organizer: PublicKey, eventId: number): [PublicKey, number] {
   return PublicKey.findProgramAddressSync(
     [Buffer.from('event'), organizer.toBuffer(), Buffer.from(eventId.toString())],

@@ -1,13 +1,15 @@
-import { useGatherFiProgram, findEventPDA, findEscrowPDA, findBudgetPDA } from '@/utils/anchor';
+import { useGatherFiProgram, useGatherFiProgramReadOnly, findEventPDA, findEscrowPDA, findBudgetPDA } from '@/utils/anchor';
 import { PublicKey } from '@solana/web3.js';
 import { TokenType } from '@/utils/tokens';
 import { useToast } from '@/contexts/ToastContext';
 import { EventStatus } from '@/types/gatherfi';
 
 export const useEvent = () => {
-  const { getProgramWithSigner, PROGRAM_ID } = useGatherFiProgram();
+  const { getProgramWithSigner } = useGatherFiProgram();
+  const { getProgram: getReadOnlyProgram } = useGatherFiProgramReadOnly();
   const { success, error } = useToast();
 
+  // CREATE operations (need signer)
   const createEvent = async (
     eventId: number,
     name: string,
@@ -52,9 +54,10 @@ export const useEvent = () => {
     }
   };
 
+  // READ operations (don't need signer)
   const getEvent = async (eventPda: PublicKey) => {
     try {
-      const program = getProgramWithSigner();
+      const program = getReadOnlyProgram();
       return await program.account.event.fetch(eventPda);
     } catch (err) {
       console.error('Error fetching event:', err);
@@ -62,6 +65,47 @@ export const useEvent = () => {
     }
   };
 
+  const getAllEvents = async () => {
+    try {
+      const program = getReadOnlyProgram();
+      const events = await program.account.event.all();
+      return events.sort((a, b) => Number(b.account.eventId) - Number(a.account.eventId));
+    } catch (err) {
+      console.error('Error fetching events:', err);
+      return [];
+    }
+  };
+
+  const getEventsByOrganizer = async (organizer: PublicKey) => {
+    try {
+      const program = getReadOnlyProgram();
+      const events = await program.account.event.all([
+        {
+          memcmp: {
+            offset: 8,
+            bytes: organizer.toBase58()
+          }
+        }
+      ]);
+      return events;
+    } catch (err) {
+      console.error('Error fetching organizer events:', err);
+      return [];
+    }
+  };
+
+  const getEventsByStatus = async (status: EventStatus) => {
+    try {
+      const program = getReadOnlyProgram();
+      const events = await program.account.event.all();
+      return events.filter(e => e.account.status === status);
+    } catch (err) {
+      console.error('Error fetching events by status:', err);
+      return [];
+    }
+  };
+
+  // UPDATE operations (need signer)
   const updateEvent = async (
     eventPda: PublicKey,
     name?: string,
@@ -155,55 +199,18 @@ export const useEvent = () => {
     }
   };
 
-  const getAllEvents = async () => {
-    try {
-      const program = getProgramWithSigner();
-      const events = await program.account.event.all();
-      return events.sort((a, b) => b.account.eventId.cmp(a.account.eventId));
-    } catch (err) {
-      console.error('Error fetching events:', err);
-      return [];
-    }
-  };
-
-  const getEventsByOrganizer = async (organizer: PublicKey) => {
-    try {
-      const program = getProgramWithSigner();
-      const events = await program.account.event.all([
-        {
-          memcmp: {
-            offset: 8,
-            bytes: organizer.toBase58()
-          }
-        }
-      ]);
-      return events;
-    } catch (err) {
-      console.error('Error fetching organizer events:', err);
-      return [];
-    }
-  };
-
-  const getEventsByStatus = async (status: EventStatus) => {
-    try {
-      const program = getProgramWithSigner();
-      const events = await program.account.event.all();
-      return events.filter(e => e.account.status === status);
-    } catch (err) {
-      console.error('Error fetching events by status:', err);
-      return [];
-    }
-  };
-
   return {
+    // Create
     createEvent,
+    // Read
     getEvent,
+    getAllEvents,
+    getEventsByOrganizer,
+    getEventsByStatus,
+    // Update
     updateEvent,
     cancelEvent,
     finalizeFunding,
-    finalizeFundingFailure,
-    getAllEvents,
-    getEventsByOrganizer,
-    getEventsByStatus
+    finalizeFundingFailure
   };
 };
