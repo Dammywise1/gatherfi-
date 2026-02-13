@@ -38,11 +38,12 @@
         { "name": "event", "isMut": true, "isSigner": false },
         { "name": "escrow", "isMut": true, "isSigner": false },
         { "name": "contributorAccount", "isMut": true, "isSigner": false },
-        { "name": "tokenMint", "isMut": true, "isSigner": false },
-        { "name": "contributorTokenAccount", "isMut": true, "isSigner": false },
-        { "name": "escrowTokenAccount", "isMut": true, "isSigner": false },
+        { "name": "tokenMint", "isMut": true, "isSigner": false, "isOptional": true },
+        { "name": "contributorTokenAccount", "isMut": true, "isSigner": false, "isOptional": true },
+        { "name": "escrowTokenAccount", "isMut": true, "isSigner": false, "isOptional": true },
+        { "name": "platformConfig", "isMut": false, "isSigner": false },
         { "name": "systemProgram", "isMut": false, "isSigner": false },
-        { "name": "tokenProgram", "isMut": false, "isSigner": false }
+        { "name": "tokenProgram", "isMut": false, "isSigner": false, "isOptional": true }
       ],
       "args": [
         { "name": "amount", "type": "u64" },
@@ -56,15 +57,14 @@
         { "name": "event", "isMut": true, "isSigner": false },
         { "name": "escrow", "isMut": true, "isSigner": false },
         { "name": "ticket", "isMut": true, "isSigner": false },
-        { "name": "tokenMint", "isMut": true, "isSigner": false },
-        { "name": "buyerTokenAccount", "isMut": true, "isSigner": false },
-        { "name": "escrowTokenAccount", "isMut": true, "isSigner": false },
+        { "name": "tokenMint", "isMut": true, "isSigner": false, "isOptional": true },
+        { "name": "buyerTokenAccount", "isMut": true, "isSigner": false, "isOptional": true },
+        { "name": "escrowTokenAccount", "isMut": true, "isSigner": false, "isOptional": true },
+        { "name": "platformConfig", "isMut": false, "isSigner": false },
         { "name": "systemProgram", "isMut": false, "isSigner": false },
-        { "name": "tokenProgram", "isMut": false, "isSigner": false }
+        { "name": "tokenProgram", "isMut": false, "isSigner": false, "isOptional": true }
       ],
-      "args": [
-        { "name": "tokenType", "type": { "defined": "TokenType" } }
-      ]
+      "args": [{ "name": "tokenType", "type": { "defined": "TokenType" } }]
     },
     {
       "name": "releaseMilestone",
@@ -73,15 +73,14 @@
         { "name": "event", "isMut": true, "isSigner": false },
         { "name": "escrow", "isMut": true, "isSigner": false },
         { "name": "milestone", "isMut": true, "isSigner": false },
-        { "name": "tokenMint", "isMut": true, "isSigner": false },
-        { "name": "escrowTokenAccount", "isMut": true, "isSigner": false },
-        { "name": "organizerTokenAccount", "isMut": true, "isSigner": false },
+        { "name": "tokenMint", "isMut": true, "isSigner": false, "isOptional": true },
+        { "name": "escrowTokenAccount", "isMut": true, "isSigner": false, "isOptional": true },
+        { "name": "organizerTokenAccount", "isMut": true, "isSigner": false, "isOptional": true },
+        { "name": "platformConfig", "isMut": false, "isSigner": false },
         { "name": "systemProgram", "isMut": false, "isSigner": false },
-        { "name": "tokenProgram", "isMut": false, "isSigner": false }
+        { "name": "tokenProgram", "isMut": false, "isSigner": false, "isOptional": true }
       ],
-      "args": [
-        { "name": "milestoneIndex", "type": "u8" }
-      ]
+      "args": [{ "name": "milestoneIndex", "type": "u8" }]
     },
     {
       "name": "claimRefund",
@@ -90,11 +89,12 @@
         { "name": "event", "isMut": true, "isSigner": false },
         { "name": "escrow", "isMut": true, "isSigner": false },
         { "name": "contributorAccount", "isMut": true, "isSigner": false },
-        { "name": "tokenMint", "isMut": true, "isSigner": false },
-        { "name": "escrowTokenAccount", "isMut": true, "isSigner": false },
-        { "name": "contributorTokenAccount", "isMut": true, "isSigner": false },
+        { "name": "tokenMint", "isMut": true, "isSigner": false, "isOptional": true },
+        { "name": "escrowTokenAccount", "isMut": true, "isSigner": false, "isOptional": true },
+        { "name": "contributorTokenAccount", "isMut": true, "isSigner": false, "isOptional": true },
+        { "name": "platformConfig", "isMut": false, "isSigner": false },
         { "name": "systemProgram", "isMut": false, "isSigner": false },
-        { "name": "tokenProgram", "isMut": false, "isSigner": false }
+        { "name": "tokenProgram", "isMut": false, "isSigner": false, "isOptional": true }
       ],
       "args": []
     },
@@ -108,6 +108,15 @@
       "args": []
     },
     {
+      "name": "finalizeFundingFailure",
+      "accounts": [
+        { "name": "caller", "isMut": true, "isSigner": true },
+        { "name": "event", "isMut": true, "isSigner": false },
+        { "name": "systemProgram", "isMut": false, "isSigner": false }
+      ],
+      "args": []
+    },
+    {
       "name": "submitBudget",
       "accounts": [
         { "name": "organizer", "isMut": true, "isSigner": true },
@@ -115,9 +124,7 @@
         { "name": "budget", "isMut": true, "isSigner": false },
         { "name": "systemProgram", "isMut": false, "isSigner": false }
       ],
-      "args": [
-        { "name": "totalAmount", "type": "u64" }
-      ]
+      "args": [{ "name": "totalAmount", "type": "u64" }]
     },
     {
       "name": "voteOnBudget",
@@ -129,9 +136,7 @@
         { "name": "vote", "isMut": true, "isSigner": false },
         { "name": "systemProgram", "isMut": false, "isSigner": false }
       ],
-      "args": [
-        { "name": "approve", "type": "bool" }
-      ]
+      "args": [{ "name": "approve", "type": "bool" }]
     },
     {
       "name": "addMilestone",
@@ -165,11 +170,10 @@
         { "name": "event", "isMut": true, "isSigner": false },
         { "name": "escrow", "isMut": false, "isSigner": false },
         { "name": "profitDistribution", "isMut": true, "isSigner": false },
+        { "name": "platformConfig", "isMut": false, "isSigner": false },
         { "name": "systemProgram", "isMut": false, "isSigner": false }
       ],
-      "args": [
-        { "name": "totalRevenue", "type": "u64" }
-      ]
+      "args": [{ "name": "totalRevenue", "type": "u64" }]
     },
     {
       "name": "updateEvent",
@@ -191,6 +195,68 @@
         { "name": "event", "isMut": true, "isSigner": false }
       ],
       "args": []
+    },
+    {
+      "name": "emergencyPause",
+      "accounts": [
+        { "name": "admin", "isMut": true, "isSigner": true },
+        { "name": "platformConfig", "isMut": true, "isSigner": false }
+      ],
+      "args": []
+    },
+    {
+      "name": "claimProfit",
+      "accounts": [
+        { "name": "backer", "isMut": true, "isSigner": true },
+        { "name": "event", "isMut": true, "isSigner": false },
+        { "name": "profitDistribution", "isMut": true, "isSigner": false },
+        { "name": "contributorAccount", "isMut": true, "isSigner": false },
+        { "name": "escrow", "isMut": true, "isSigner": false },
+        { "name": "tokenMint", "isMut": true, "isSigner": false, "isOptional": true },
+        { "name": "escrowTokenAccount", "isMut": true, "isSigner": false, "isOptional": true },
+        { "name": "backerTokenAccount", "isMut": true, "isSigner": false, "isOptional": true },
+        { "name": "platformConfig", "isMut": false, "isSigner": false },
+        { "name": "systemProgram", "isMut": false, "isSigner": false },
+        { "name": "tokenProgram", "isMut": false, "isSigner": false, "isOptional": true }
+      ],
+      "args": []
+    },
+    {
+      "name": "claimOrganizerProfit",
+      "accounts": [
+        { "name": "organizer", "isMut": true, "isSigner": true },
+        { "name": "event", "isMut": true, "isSigner": false },
+        { "name": "profitDistribution", "isMut": true, "isSigner": false },
+        { "name": "escrow", "isMut": true, "isSigner": false },
+        { "name": "tokenMint", "isMut": true, "isSigner": false, "isOptional": true },
+        { "name": "escrowTokenAccount", "isMut": true, "isSigner": false, "isOptional": true },
+        { "name": "organizerTokenAccount", "isMut": true, "isSigner": false, "isOptional": true },
+        { "name": "platformConfig", "isMut": false, "isSigner": false },
+        { "name": "systemProgram", "isMut": false, "isSigner": false },
+        { "name": "tokenProgram", "isMut": false, "isSigner": false, "isOptional": true }
+      ],
+      "args": []
+    },
+    {
+      "name": "withdrawFees",
+      "accounts": [
+        { "name": "admin", "isMut": true, "isSigner": true },
+        { "name": "platformConfig", "isMut": true, "isSigner": false },
+        { "name": "treasury", "isMut": true, "isSigner": false },
+        { "name": "systemProgram", "isMut": false, "isSigner": false }
+      ],
+      "args": [{ "name": "amount", "type": "u64" }]
+    },
+    {
+      "name": "updateTokenMints",
+      "accounts": [
+        { "name": "admin", "isMut": true, "isSigner": true },
+        { "name": "platformConfig", "isMut": true, "isSigner": false }
+      ],
+      "args": [
+        { "name": "usdcMint", "type": { "option": "publicKey" } },
+        { "name": "usdtMint", "type": { "option": "publicKey" } }
+      ]
     }
   ],
   "accounts": [
@@ -206,6 +272,8 @@
           { "name": "totalFeesCollected", "type": "u64" },
           { "name": "totalVolume", "type": "u64" },
           { "name": "paused", "type": "bool" },
+          { "name": "usdcMint", "type": "publicKey" },
+          { "name": "usdtMint", "type": "publicKey" },
           { "name": "bump", "type": "u8" }
         ]
       }
@@ -374,7 +442,8 @@
           { "name": "Active" },
           { "name": "Completed" },
           { "name": "Cancelled" },
-          { "name": "Refunding" }
+          { "name": "Refunding" },
+          { "name": "Failed" }
         ]
       }
     }
@@ -399,6 +468,9 @@
     { "code": 6016, "name": "InvalidTokenType", "msg": "Invalid token type" },
     { "code": 6017, "name": "TokenNotAccepted", "msg": "Token not accepted for this event" },
     { "code": 6018, "name": "InvalidMint", "msg": "Invalid mint address" },
-    { "code": 6019, "name": "InvalidTokenAccount", "msg": "Invalid token account" }
+    { "code": 6019, "name": "InvalidTokenAccount", "msg": "Invalid token account" },
+    { "code": 6020, "name": "ProfitAlreadyClaimed", "msg": "Profit already claimed" },
+    { "code": 6021, "name": "NoFeesToWithdraw", "msg": "No fees to withdraw" },
+    { "code": 6022, "name": "EventNotFailed", "msg": "Event not failed" }
   ]
 }

@@ -1,36 +1,41 @@
-This is a [Next.js](https://nextjs.org/) project bootstrapped with [`create-next-app`](https://github.com/vercel/next.js/tree/canary/packages/create-next-app).
+# GatherFi - Decentralized Event Funding on Solana
+
+GatherFi is a decentralized crowdfunding platform for events built on Solana. It enables event organizers to raise funds, sell tickets, and manage budgets through community voting.
+
+## Features
+
+- 🎫 **Event Creation** - Create events with funding goals, ticket prices, and accepted tokens (SOL/USDC/USDT)
+- 💰 **Multi-Token Contributions** - Support for SOL, USDC, and USDT with configurable mints
+- 🗳️ **Budget Voting** - Contributors vote on budget proposals with voting power = contribution amount
+- 📊 **Milestone Management** - Organizers create milestones and release funds upon completion
+- 🎟️ **NFT Tickets** - Purchase tickets with accepted tokens, QR code check-in
+- 💸 **Profit Sharing** - 60% backers / 35% organizer / 5% platform profit distribution
+- 🔄 **Refund System** - Automatic refunds for failed or cancelled events
+- ⚙️ **Platform Admin** - Emergency pause, token mint updates, fee withdrawal
+
+## Smart Contract
+
+- **Program ID**: `D9QyTaZjihP9gfch2Ujfg5keKpEU3snAemvMg4mE9DYz`
+- **Network**: Solana Devnet
+- **Token Mints**:
+  - USDC: `4zMMC9srt5Ri5X14GAgXhaHii3GnPAEERYPJgZJDncDU`
+  - USDT: `Es9vMFrzaCERmJfrF4H2FYD4KCoNkY11McCe8BenwNYB`
 
 ## Getting Started
 
-First, run the development server:
+### Prerequisites
 
-```bash
-npm run dev
-# or
-yarn dev
-# or
-pnpm dev
-# or
-bun dev
-```
+- Node.js 18+
+- npm or yarn
+- Phantom Wallet or Solflare
 
-Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
+### Installation
 
-You can start editing the page by modifying `app/page.tsx`. The page auto-updates as you edit the file.
+1. Clone the repository
+2. Install dependencies: `npm install`
+3. Run the development server: `npm run dev`
+4. Open [http://localhost:3000](http://localhost:3000)
 
-This project uses [`next/font`](https://nextjs.org/docs/basic-features/font-optimization) to automatically optimize and load Inter, a custom Google Font.
+## Environment Variables
 
-## Learn More
-
-To learn more about Next.js, take a look at the following resources:
-
-- [Next.js Documentation](https://nextjs.org/docs) - learn about Next.js features and API.
-- [Learn Next.js](https://nextjs.org/learn) - an interactive Next.js tutorial.
-
-You can check out [the Next.js GitHub repository](https://github.com/vercel/next.js/) - your feedback and contributions are welcome!
-
-## Deploy on Vercel
-
-The easiest way to deploy your Next.js app is to use the [Vercel Platform](https://vercel.com/new?utm_medium=default-template&filter=next.js&utm_source=create-next-app&utm_campaign=create-next-app-readme) from the creators of Next.js.
-
-Check out our [Next.js deployment documentation](https://nextjs.org/docs/deployment) for more details.
+Create a `.env.local` file with:

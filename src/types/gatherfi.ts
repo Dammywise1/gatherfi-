@@ -1,6 +1,5 @@
 import { PublicKey } from '@solana/web3.js';
 
-// ===== ENUMS =====
 export enum TokenType {
   SOL = 'SOL',
   USDC = 'USDC',
@@ -14,58 +13,57 @@ export enum EventStatus {
   Active = 'Active',
   Completed = 'Completed',
   Cancelled = 'Cancelled',
-  Refunding = 'Refunding'
+  Refunding = 'Refunding',
+  Failed = 'Failed'
 }
 
-// ===== ACCOUNT STRUCTURES =====
 export interface PlatformConfig {
   admin: PublicKey;
   treasury: PublicKey;
   feePercentage: number;
   royaltyPercentage: number;
-  totalFeesCollected: number;
-  totalVolume: number;
+  totalFeesCollected: bigint;
+  totalVolume: bigint;
   paused: boolean;
+  usdcMint: PublicKey;
+  usdtMint: PublicKey;
   bump: number;
-  publicKey?: PublicKey;
 }
 
 export interface Event {
   organizer: PublicKey;
-  eventId: number;
+  eventId: bigint;
   name: string;
   description: string;
-  targetAmount: number;
-  amountRaised: number;
-  ticketPrice: number;
+  targetAmount: bigint;
+  amountRaised: bigint;
+  ticketPrice: bigint;
   ticketsSold: number;
   maxTickets: number;
   location: string;
-  eventDate: number;
+  eventDate: bigint;
   status: EventStatus;
   acceptedTokens: TokenType[];
   budgetApproved: boolean;
-  fundingDeadline: number;
-  totalVotes: number;
-  yesVotes: number;
-  noVotes: number;
-  platformFeeAmount: number;
+  fundingDeadline: bigint;
+  totalVotes: bigint;
+  yesVotes: bigint;
+  noVotes: bigint;
+  platformFeeAmount: bigint;
   ticketMint: PublicKey | null;
   escrowBump: number;
   eventBump: number;
-  publicKey?: PublicKey;
 }
 
 export interface Contributor {
   event: PublicKey;
   contributor: PublicKey;
-  amount: number;
-  votingPower: number;
+  amount: bigint;
+  votingPower: bigint;
   tokenType: TokenType;
-  profitsClaimed: number;
+  profitsClaimed: bigint;
   refundClaimed: boolean;
   bump: number;
-  publicKey?: PublicKey;
 }
 
 export interface Ticket {
@@ -74,123 +72,60 @@ export interface Ticket {
   owner: PublicKey;
   ticketNumber: number;
   checkedIn: boolean;
-  pricePaid: number;
+  pricePaid: bigint;
   tokenType: TokenType;
   refunded: boolean;
   bump: number;
-  publicKey?: PublicKey;
 }
 
 export interface Budget {
   event: PublicKey;
-  totalAmount: number;
+  totalAmount: bigint;
   approved: boolean;
-  submittedAt: number;
+  submittedAt: bigint;
   bump: number;
-  publicKey?: PublicKey;
 }
 
 export interface Milestone {
   event: PublicKey;
   index: number;
   description: string;
-  amount: number;
-  dueDate: number;
+  amount: bigint;
+  dueDate: bigint;
   tokenType: TokenType;
   released: boolean;
-  releaseDate: number | null;
+  releaseDate: bigint | null;
   bump: number;
-  publicKey?: PublicKey;
+}
+
+export interface ProfitDistribution {
+  event: PublicKey;
+  totalRevenue: bigint;
+  expenses: bigint;
+  netProfit: bigint;
+  backersShare: bigint;
+  organizerShare: bigint;
+  platformShare: bigint;
+  distributed: boolean;
+  distributionDate: bigint;
+  bump: number;
 }
 
 export interface Escrow {
   event: PublicKey;
-  solBalance: number;
-  usdcBalance: number;
-  usdtBalance: number;
-  totalBalance: number;
+  solBalance: bigint;
+  usdcBalance: bigint;
+  usdtBalance: bigint;
+  totalBalance: bigint;
   isInitialized: boolean;
   bump: number;
-  publicKey?: PublicKey;
 }
 
 export interface Vote {
   event: PublicKey;
   voter: PublicKey;
-  amount: number;
+  amount: bigint;
   approve: boolean;
-  votedAt: number;
+  votedAt: bigint;
   bump: number;
-  publicKey?: PublicKey;
-}
-
-export interface ProfitDistribution {
-  event: PublicKey;
-  totalRevenue: number;
-  expenses: number;
-  netProfit: number;
-  backersShare: number;
-  organizerShare: number;
-  platformShare: number;
-  distributed: boolean;
-  distributionDate: number;
-  bump: number;
-  publicKey?: PublicKey;
-}
-
-// ===== FORM DATA TYPES =====
-export interface CreateEventFormData {
-  eventId: number;
-  name: string;
-  description: string;
-  targetAmount: number;
-  ticketPrice: number;
-  maxTickets: number;
-  location: string;
-  eventDate: Date;
-  acceptedTokens: TokenType[];
-}
-
-export interface ContributeFormData {
-  amount: number;
-  tokenType: TokenType;
-}
-
-export interface PurchaseTicketFormData {
-  tokenType: TokenType;
-}
-
-export interface MilestoneFormData {
-  index: number;
-  description: string;
-  amount: number;
-  dueDate: Date;
-  tokenType: TokenType;
-}
-
-export interface BudgetFormData {
-  totalAmount: number;
-}
-
-export interface VoteFormData {
-  approve: boolean;
-}
-
-// ===== RESPONSE TYPES =====
-export interface TransactionResult {
-  signature: string;
-  success: boolean;
-  error?: string;
-}
-
-export interface EventsResponse {
-  events: Event[];
-  total: number;
-}
-
-export interface ContributorStats {
-  totalContributed: number;
-  votingPower: number;
-  profitsClaimed: number;
-  eventsParticipated: number;
 }
